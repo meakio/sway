@@ -904,6 +904,7 @@ bool view_find_and_unmark(char *mark) {
 			free(view_mark);
 			list_del(view->marks, i);
 			view_update_marks_textures(view);
+			ipc_event_window(container, "mark");
 			return true;
 		}
 	}
@@ -911,11 +912,10 @@ bool view_find_and_unmark(char *mark) {
 }
 
 void view_clear_marks(struct sway_view *view) {
-	for (int i = 0; i < view->marks->length; ++i) {
-		free(view->marks->items[i]);
+	while (view->marks->length) {
+		list_del(view->marks, 0);
+		ipc_event_window(view->swayc, "mark");
 	}
-	list_free(view->marks);
-	view->marks = create_list();
 }
 
 bool view_has_mark(struct sway_view *view, char *mark) {
@@ -926,6 +926,11 @@ bool view_has_mark(struct sway_view *view, char *mark) {
 		}
 	}
 	return false;
+}
+
+void view_add_mark(struct sway_view *view, char *mark) {
+	list_add(view->marks, strdup(mark));
+	ipc_event_window(view->swayc, "mark");
 }
 
 static void update_marks_texture(struct sway_view *view,
